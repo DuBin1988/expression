@@ -1,0 +1,10 @@
+source:
+
+user = {
+  name: $abc$,
+  age: 20
+},
+a = $用户名字为：{user.name}$
+
+expected:
+用户名字为：abc

@@ -79,7 +79,7 @@ $)
 字符串按模板字符串写法，如下：
 ```
 user = {
-  name: 'abc',
+  name: $abc$,
   age: 20
 },
 a = $用户名字为：{user.name}$

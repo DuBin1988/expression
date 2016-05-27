@@ -22,6 +22,10 @@ public class TestExpression extends TestCase {
 		execute("函数测试.exp", params);
 	}
 
+	public void testString() {
+		execute("字符串测试.exp");
+	}
+	
 	// 不带参数执行并检查结果
 	private void execute(String name) {
 		execute(name, new HashMap<String, Object>());
