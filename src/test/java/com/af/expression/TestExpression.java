@@ -26,6 +26,10 @@ public class TestExpression extends TestCase {
 		execute("字符串测试.exp");
 	}
 	
+	public void testComment() {
+		execute("注释测试.exp");
+	}
+	
 	// 不带参数执行并检查结果
 	private void execute(String name) {
 		execute(name, new HashMap<String, Object>());
@@ -65,11 +69,11 @@ public class TestExpression extends TestCase {
 			// 读掉`source:`
 			reader.readLine();
 			String expression = "";
-			String str = reader.readLine();
+			String str = reader.readLine() + "\n";
 			// `expected`部分为期望值
-			while (!str.equals("expected:")) {
+			while (!str.equals("expected:\n")) {
 				expression += str;
-				str = reader.readLine();
+				str = reader.readLine() + "\n";
 			}
 			return expression;
 		} catch (Exception e) {

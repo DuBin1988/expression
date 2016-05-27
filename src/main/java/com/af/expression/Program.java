@@ -486,9 +486,19 @@ public class Program {
 			return t;
 		}
 		// 读去所有空白
-		while (pos < Source.length() && Source.charAt(pos) == ' ') {
+		while (pos < Source.length() && (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n')) {
 			pos++;
 		}
+		// 如果是 "//" 读去所有注释，到行尾都是注释
+		if (pos < Source.length() - 2 && Source.charAt(pos) == '/' && Source.charAt(pos + 1) == '/') {
+			pos += 2;
+			while (pos < Source.length() && Source.charAt(pos) != '\n') {
+				pos++;
+			}
+			// 读掉行尾
+			pos++;
+		}
+				
 		// 如果完了，返回结束
 		if (pos == Source.length()) {
 			return new Token(TokenType.End, null, sPos);
@@ -589,7 +599,7 @@ public class Program {
 			pos += 1;
 			return new Token(TokenType.Oper, str, sPos);
 		} else {
-			throw new RuntimeException(GetExceptionMessage("无效单词"));
+			throw new RuntimeException(GetExceptionMessage("无效单词：" + Source.charAt(pos)));
 		}
 	}
 }
