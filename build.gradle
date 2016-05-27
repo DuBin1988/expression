@@ -1,0 +1,36 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'jetty'
+apply plugin: 'eclipse'
+apply plugin: 'eclipse-wtp'
+
+repositories {
+	mavenCentral()
+	maven {
+		url "http://125.76.225.203:3002/nexus/content/repositories/thirdparty/"
+	}
+}
+
+dependencies {
+	compile(
+		"org.hibernate:hibernate-core:3.3.1.GA",
+		"com.sun.jersey:jersey-spring:1.0",
+		"com.sun.jersey:jersey-json:1.0",
+		"aspectj:aspectjweaver:1.5.3",
+		"log4j:log4j:1.2.9",
+		"org.slf4j:slf4j-simple:1.5.8",
+		"commons-dbcp:commons-dbcp:1.2.2",
+		"javax.servlet:servlet-api:2.3",
+		"af:expression:1.0"
+	)
+	
+	testCompile(
+		"junit:junit:4.4",
+		"org.apache.httpcomponents:httpclient:4.1.2"
+	)
+	
+	runtime(
+		"jdbc:sqlserver:1",
+		"cglib:cglib:2.2"
+	)
+}

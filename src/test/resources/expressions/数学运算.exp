@@ -1,0 +1,6 @@
+source:
+
+3 + 2.5
+
+expected:
+5.5
