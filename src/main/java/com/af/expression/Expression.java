@@ -332,7 +332,7 @@ public class Expression {
 
 	// 函数调用
 	public static Expression Call(Expression objExp, String name,
-			Expression[] params) {
+			List<Expression> params) {
 		Expression result = new Expression(ExpressionType.Call, name);
 		result.children.add(objExp);
 		// 把所有参数加入函数调用子中

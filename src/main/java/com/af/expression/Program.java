@@ -397,8 +397,9 @@ public class Program {
 				throw new RuntimeException(GetExceptionMessage("缺少']'"));
 			}
 			// 产生条件过滤调用函数
-			Expression result = Expression.Call(objExp, "Where",
-					new Expression[] { Expression.Constant(exp.Compile()) });
+			List<Expression> params = new LinkedList<Expression>();
+			params.add(Expression.Constant(exp.Compile()));
+			Expression result = Expression.Call(objExp, "Where", params);
 			return result;
 		}
 		_tokens.offer(n);
@@ -407,7 +408,7 @@ public class Program {
 
 	// 函数调用
 	private Expression MethodCall(String name, Expression obj) {
-		Expression[] ps = Params();
+		List<Expression> ps = Params();
 		Token t = GetToken();
 		if (t.Type != TokenType.Oper || !t.Value.equals(")")) {
 			throw new RuntimeException(GetExceptionMessage("函数调用括号不匹配"));
@@ -418,7 +419,7 @@ public class Program {
 	}
 
 	// 函数参数列表
-	private Expression[] Params() {
+	private List<Expression> Params() {
 		List<Expression> ps = new ArrayList<Expression>();
 		Expression exp = Exp();
 		// 如果exp中含有data对象，说明是集合处理函数中每一项值，要当做Delegate处理。
@@ -430,7 +431,7 @@ public class Program {
 			t = GetToken();
 		}
 		_tokens.offer(t);
-		return (Expression[]) ps.toArray();
+		return ps;
 	}
 
 	// 处理参数，如果exp中含有data对象，说明是集合处理函数中每一项值，要当做Delegate处理。
