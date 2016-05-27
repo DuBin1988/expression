@@ -1,0 +1,10 @@
+source:
+
+a = {
+  name: $abc$,
+  age: 5
+},
+b = a.age * 2
+
+expected:
+10.0

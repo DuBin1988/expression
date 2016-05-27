@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 
 public class TestExpression extends TestCase {
 	public void testThree() {
-		execute("条件表达式.exp");
+		execute("JSON对象.exp");
 	}
 
 	// 执行并检查程序结果

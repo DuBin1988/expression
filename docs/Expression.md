@@ -37,3 +37,5 @@ list.sum(data.age + a)
 
 - Comma：value = null, children = 各表达式。
 - Assign: value = 属性名,
+- Json：value = null, children = 属性值对
+- Attr: value = 属性名, children[] = 属性值表达式

@@ -1,35 +1,39 @@
 package com.af.expression;
 
 public enum ExpressionType {
-	
+
 	GreaterThan,	//>
 	GreaterThanOrEqual,	//>=
 	LessThan,		//<
 	LessThanOrEqual,			//<=
-	Equal,				//==
+	Equal,			//==
 	NotEqual,		//!=
-	
-	Add,					//+
+
+	Add,			//+
 	Subtract,		//-
 	Multiply,		//*
-	Divide,			//³ý·¨
-	Modulo,			//ÇóÓà
-	
-	Concat,			//×Ö·û´®Á¬½Ó
-	
-	Not,					//Âß¼­·Ç
-	And,					//Âß¼­Óë
-	Or,					//Âß¼­»ò
+	Divide,			//é™¤æ³•
+	Modulo,			//æ±‚ä½™
 
-	Constant,		//³£Êý
-	Identy,			//±êÊ¶·û
-	
-	Property,		//»ñÈ¡¶ÔÏóÊôÐÔ
-	Call,				//º¯Êýµ÷ÓÃ
+	Concat,			//å­—ç¬¦ä¸²è¿žæŽ¥
 
-	Comma,			//¶ººÅ±í´ïÊ½
+	Not,			//é€»è¾‘éž
+	And,			//é€»è¾‘ä¸Ž
+	Or,				//é€»è¾‘æˆ–
+
+	Constant,		//å¸¸æ•°
+	Identy,			//æ ‡è¯†ç¬¦
+
+	Property,		//èŽ·å–å¯¹è±¡å±žæ€§
 	
-	Assign,			//¸³ÖµÓï¾ä
-	Condition;		//Ìõ¼þÓï¾ä	
-    
+	Json,			//äº§ç”ŸJsonå¯¹è±¡
+	Attr,			//Jsonå¯¹è±¡å±žæ€§å€¼å¯¹
+	
+	Call,			//å‡½æ•°è°ƒç”¨
+
+	Comma,			//é€—å·è¡¨è¾¾å¼
+
+	Assign,			//èµ‹å€¼è¯­å¥
+	Condition;		//æ¡ä»¶è¯­å¥
+
 }

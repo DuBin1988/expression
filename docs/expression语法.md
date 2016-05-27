@@ -26,7 +26,7 @@ a = 10
 
 ```
 a = {
-  name: 'abc',
+  name: $abc$,
   age: 5
 },
 b = a.age

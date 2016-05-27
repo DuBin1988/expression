@@ -264,6 +264,9 @@ public class Program {
 				throw new RuntimeException(GetExceptionMessage("括号不匹配"));
 			}
 			return result;
+		} else if (t.Type == TokenType.Oper && t.Value.equals("{")) {
+			// json对象
+			return Json();
 		} else if (t.Type == TokenType.Oper && t.Value.equals("$")) {
 			// 字符串拼接序列
 			Expression strExp = StringUnion();
@@ -282,7 +285,46 @@ public class Program {
 		}
 		throw new RuntimeException(GetExceptionMessage("单词类型错误，" + t));
 	}
-
+	
+	// JSON对象::={}|{属性名:属性值,属性名:属性值}
+	private Expression Json() {
+		List<Expression> children = new LinkedList<Expression>();
+		
+		Token t = GetToken();
+		// 空对象，直接返回
+		if (t.Type == TokenType.Oper && t.Value.equals("}")) {
+			return Expression.Json(children);
+		}
+		
+		_tokens.offer(t);
+		children.add(Attr());
+		t = GetToken();
+		// 如果是"," 继续看下一个属性
+		while (t.Type == TokenType.Oper && t.Value.equals(",")) {
+			children.add(Attr());
+			t = GetToken();
+		}
+		if (t.Type != TokenType.Oper && t.Value.equals("}")) {
+			throw new RuntimeException(GetExceptionMessage("必须是'}'"));
+		}
+		
+		return Expression.Json(children);
+	}
+	
+	// 属性值对::=属性名: 属性值
+	private Expression Attr() {
+		Token name = GetToken();
+		if (name.Type != TokenType.Identy) {
+			throw new RuntimeException(GetExceptionMessage("JSON对象必须是属性名"));
+		}
+		Token t = GetToken();
+		if (t.Type != TokenType.Oper || !t.Value.equals(":")) {
+			throw new RuntimeException(GetExceptionMessage("必须是':'"));
+		}
+		Expression exp = Exp();
+		return Expression.Attr(name.Value.toString(), exp);
+	}
+	
 	// 对字符串拼接序列进行解析
 	private Expression StringUnion() {
 		// 字符串连接方法

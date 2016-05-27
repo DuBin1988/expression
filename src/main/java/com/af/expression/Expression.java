@@ -2,7 +2,9 @@ package com.af.expression;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Expression {
 	// 节点类型
@@ -96,6 +98,9 @@ public class Expression {
 			Object r = right.invoke();
 			return l.toString() + r.toString();
 		}
+		case Json: {	// 返回Json对象
+			return Json();
+		}
 		case GreaterThan: // 比较运算
 		case GreaterThanOrEqual:
 		case LessThan:
@@ -174,17 +179,7 @@ public class Expression {
 			}
 		}
 		case Property: { // 获取属性值
-			Expression objExp = this.children.get(0);
-			// 获取对象
-			Object obj = objExp.invoke();
-			// 属性名
-			String name = (String) this.value;
-			// 利用反射机制获得属性值
-			try {
-				return obj.getClass().getField(name).get(obj);
-			} catch (Exception e) {
-				throw new RuntimeException("属性值获取异常：" + name);
-			}
+			return property();
 		}
 		case Call: { // 函数调用
 			Expression objExp = this.children.get(0);
@@ -250,6 +245,38 @@ public class Expression {
 		return value;
 	}
 	
+	// 获取对象属性
+	private Object property() {
+		Expression objExp = this.children.get(0);
+		// 获取对象
+		Object obj = objExp.invoke();
+		// 属性名
+		String name = (String) this.value;
+		try {
+			// 是Map
+			if (obj.getClass() == HashMap.class) {
+				Map<String, Object> map = (Map<String, Object>)obj;
+				return map.get(name);
+			} else {
+				// 利用反射机制获得属性值
+				return obj.getClass().getField(name).get(obj);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("属性值获取异常：" + name);
+		}
+	}
+	
+	// 返回Json对象的结果，返回一个Map
+	private Object Json() {
+		Map<String, Object> result = new HashMap<String, Object>();
+		for (Expression child : this.children) {
+			String name = child.value.toString();
+			Object value = child.children.get(0).invoke();
+			result.put(name, value);
+		}
+		return result;
+	}
+	
 	// 产生常数
 	public static Expression Constant(Object value) {
 		Expression result = new Expression(ExpressionType.Constant, value);
@@ -269,6 +296,23 @@ public class Expression {
 		return result;
 	}
 
+	// 产生Json对象，value=null, children=属性值对
+	public static Expression Json(List<Expression> attrs) {
+		Expression result = new Expression(ExpressionType.Json);
+		for(Expression exp : attrs) {
+			result.children.add(exp);
+		}
+		return result;
+	}
+	
+	// 产生属性表达式，value=属性名，children[0]=属性值
+	public static Expression Attr(String name, Expression value) {
+		Expression result = new Expression(ExpressionType.Attr);
+		result.value = name;
+		result.children.add(value);
+		return result;
+	}
+	
 	// 逗号表达式, value=null, children=各表达式
 	public static Expression Comma(List<Expression> children) {
 		Expression result = new Expression(ExpressionType.Comma);
