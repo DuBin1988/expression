@@ -45,6 +45,13 @@ publishing {
     }
 }
 
+task release(type:Exec) {
+  workingDir '.'
+
+  //on windows:
+  commandLine 'cmd', '/c', 'release.bat'
+}
+
 // java编译bug纠正
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
