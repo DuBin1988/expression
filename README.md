@@ -22,3 +22,10 @@ params.put("a", 5);
 
 d.invoke(params);
 ```
+
+## 版本发布
+
+发布前，修改build.gradle中版本号，用下列命令发布版本：
+```
+bash release.sh
+```
