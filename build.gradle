@@ -29,7 +29,7 @@ publishing {
         maven(MavenPublication) {
             groupId 'af'
             artifactId 'expression'
-            version '1.1.0'
+            version '1.1.1'
 
             from components.java
         }
@@ -45,10 +45,8 @@ publishing {
     }
 }
 
-task release(type:Exec) {
+task release(type:Exec, dependsOn:publish) {
   workingDir '.'
-
-  //on windows:
   commandLine 'cmd', '/c', 'release.bat'
 }
 
