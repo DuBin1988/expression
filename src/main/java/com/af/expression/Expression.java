@@ -1,10 +1,15 @@
 package com.af.expression;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.af.util.MehodSignatureMatcher;
+import com.af.util.MehodSignatureMatcher.C;
+import com.af.util.MehodSignatureMatcher.I4;
 
 public class Expression {
 	// 节点类型
@@ -194,16 +199,16 @@ public class Expression {
 				params.add(paramExp.invoke());
 			}
 			// 转换参数类型
-			Class[] types = new Class[params.size()];
+			Object[] types = new Object[params.size()];
 			for (int i = 0; i < params.size(); i++) {
 				types[i] = params.get(i).getClass();
 			}
 			try {
 				// 利用反射机制获得函数
-				return obj.getClass().getMethod(name, types).invoke(obj,
-						params.toArray());
+				Method method = MehodSignatureMatcher.getMatchingMethod(obj.getClass(), name, types);
+				return method.invoke(obj, params.toArray());
 			} catch (Exception e) {
-				throw new RuntimeException("函数调用错误：name");
+				throw new RuntimeException("函数调用错误：" + name, e);
 			}
 		}
 		case Assign: { // 属性赋值

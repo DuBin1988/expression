@@ -82,7 +82,7 @@ public class TestExpression extends TestCase {
 	}
 	
 	// call函数，用于函数测试
-	public String call(String str) {
+	public String call(Object str) {
 		System.out.println(str);
 		return str + "test";
 	}

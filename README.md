@@ -23,6 +23,9 @@ params.put("a", 5);
 d.invoke(params);
 ```
 
+## 关于回车换行
+程序只认`\n`，在windows操作系统上，必须把`\r\n`替换成`\n`。
+
 ## 版本发布
 
 发布前，修改build.gradle中版本号，用下列命令发布版本：
