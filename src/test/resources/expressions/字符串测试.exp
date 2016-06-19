@@ -1,10 +1,6 @@
 source:
 
-user = {
-  name: $abc$,
-  age: 20
-},
-a = $用户名字为：{user.name}$
+$select {groupName}, COUNT(*) c group by {groupName}$ 
 
 expected:
-用户名字为：abc
+select f_parentid, COUNT(*) c group by f_parentid

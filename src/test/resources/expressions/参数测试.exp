@@ -3,4 +3,4 @@ source:
 a + 5
 
 expected:
-10.0
+10

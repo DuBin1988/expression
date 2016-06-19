@@ -19,7 +19,7 @@ public class Program {
 	// 当前是否在字符串处理环节
 	private boolean inString;
 
-	// 字符串处理环节堆栈，@进入字符串处理环节，“{}”中间部分脱离字符串处理环节
+	// 字符串处理环节堆栈，$进入字符串处理环节，“{}”中间部分脱离字符串处理环节
 	private Stack<Boolean> inStrings = new Stack<Boolean>();
 
 	public Program(String source) {
@@ -70,7 +70,8 @@ public class Program {
 		objExp = ObjectPath(objExp);
 
 		// 只能给对象属性或者变量赋值
-		if (objExp.type != ExpressionType.Property && objExp.type != ExpressionType.Identy) {
+		if (objExp.type != ExpressionType.Property
+				&& objExp.type != ExpressionType.Identy) {
 			this.pos = firstPos;
 			this._tokens.clear();
 			this.inString = false;
@@ -90,11 +91,13 @@ public class Program {
 			// 从属性Expression中获取对象及属性名
 			String name = (String) objExp.value;
 			objExp = objExp.children.get(0);
-			Expression assign = Expression.Assign(objExp, exp, name, Source, pos);
+			Expression assign = Expression.Assign(objExp, exp, name, Source,
+					pos);
 			return assign;
 		} else if (objExp.type == ExpressionType.Identy) {
 			// 变量赋值
-			Expression assign = Expression.Assign(null, exp, objExp.value.toString(), Source, pos);
+			Expression assign = Expression.Assign(null, exp,
+					objExp.value.toString(), Source, pos);
 			return assign;
 		}
 		throw new RuntimeException(GetExceptionMessage("只能给属性或者变量赋值!"));
@@ -237,7 +240,8 @@ public class Program {
 		Token t = GetToken();
 		if (t.Type == TokenType.Oper && t.Value.equals("-")) {
 			Expression r = Item();
-			return Expression.Subtract(Expression.Constant(0, Source, pos), r, Source, pos);
+			return Expression.Subtract(Expression.Constant(0, Source, pos), r,
+					Source, pos);
 		}
 		_tokens.offer(t);
 		return Item();
@@ -285,17 +289,17 @@ public class Program {
 		}
 		throw new RuntimeException(GetExceptionMessage("单词类型错误，" + t));
 	}
-	
+
 	// JSON对象::={}|{属性名:属性值,属性名:属性值}
 	private Expression Json() {
 		List<Expression> children = new LinkedList<Expression>();
-		
+
 		Token t = GetToken();
 		// 空对象，直接返回
 		if (t.Type == TokenType.Oper && t.Value.equals("}")) {
 			return Expression.Json(children, Source, pos);
 		}
-		
+
 		_tokens.offer(t);
 		children.add(Attr());
 		t = GetToken();
@@ -307,10 +311,10 @@ public class Program {
 		if (t.Type != TokenType.Oper && t.Value.equals("}")) {
 			throw new RuntimeException(GetExceptionMessage("必须是'}'"));
 		}
-		
+
 		return Expression.Json(children, Source, pos);
 	}
-	
+
 	// 属性值对::=属性名: 属性值
 	private Expression Attr() {
 		Token name = GetToken();
@@ -324,7 +328,7 @@ public class Program {
 		Expression exp = Exp();
 		return Expression.Attr(name.Value.toString(), exp, Source, pos);
 	}
-	
+
 	// 对字符串拼接序列进行解析
 	private Expression StringUnion() {
 		// 字符串连接方法
@@ -335,7 +339,8 @@ public class Program {
 				|| t.Type == TokenType.String) {
 			// 字符串，返回字符串连接结果
 			if (t.Type == TokenType.String) {
-				exp = Expression.Concat(exp, Expression.Constant(t.Value, Source, pos), Source, pos);
+				exp = Expression.Concat(exp,
+						Expression.Constant(t.Value, Source, pos), Source, pos);
 			} else {
 				// 按表达式调用{}里面的内容
 				Expression objExp = Exp();
@@ -399,7 +404,8 @@ public class Program {
 			// 产生条件过滤调用函数
 			List<Expression> params = new LinkedList<Expression>();
 			params.add(Expression.Constant(exp.Compile(), Source, pos));
-			Expression result = Expression.Call(objExp, "Where", params, Source, pos);
+			Expression result = Expression.Call(objExp, "Where", params,
+					Source, pos);
 			return result;
 		}
 		_tokens.offer(n);
@@ -461,6 +467,17 @@ public class Program {
 		}
 		// 记录单词的起始位置，包括空格等内容
 		int sPos = pos;
+
+		// 如果直接是'{'，保存上一个状态，当前状态改为非字符状态
+		if (pos < Source.length() && Source.charAt(pos) == '{') {
+			inStrings.push(inString);
+			inString = false;
+			// 返回'{'单词
+			String str = Source.substring(pos, pos + 1);
+			pos += 1;
+			return new Token(TokenType.Oper, str, sPos);
+		}
+
 		// 如果是字符串处理状态，把除过特殊字符的所有字符全部给字符串
 		if (inString) {
 			int startPos = pos;
@@ -469,13 +486,8 @@ public class Program {
 					&& Source.charAt(pos) != '$' && Source.charAt(pos) != '}') {
 				pos++;
 			}
-			// 脱离字符串操作环节，保存原来字符串操作环节状态
-			if (pos < Source.length() && Source.charAt(pos) == '{') {
-				inStrings.push(inString);
-				inString = false;
-			}
-			// 其他字符退出字符串处理环节，回到上一环节
-			else {
+			// 不是'{'，退出字符串处理环节，回到上一环节。'{'会在下次进入时，保存当前状态
+			if (!(pos < Source.length() && Source.charAt(pos) == '{')) {
 				inString = inStrings.pop();
 			}
 			Token t = new Token(TokenType.String, Source.substring(startPos,
@@ -487,14 +499,17 @@ public class Program {
 		}
 		// 读去所有空白以及注释
 		while (
-				// 普通空白
-				(pos < Source.length() 
-				&& (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n' || Source.charAt(pos) == '\t')) ||
+		// 普通空白
+		(pos < Source.length() && (Source.charAt(pos) == ' '
+				|| Source.charAt(pos) == '\n' || Source.charAt(pos) == '\t'))
+				||
 				// 是注释
-				(pos < Source.length() - 2 && Source.charAt(pos) == '/' && Source.charAt(pos + 1) == '/')) {
+				(pos < Source.length() - 2 && Source.charAt(pos) == '/' && Source
+						.charAt(pos + 1) == '/')) {
 			// 普通空白
-			if (pos < Source.length() 
-					&& (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n' || Source.charAt(pos) == '\t')) {
+			if (pos < Source.length()
+					&& (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n' || Source
+							.charAt(pos) == '\t')) {
 				pos++;
 			} else {
 				// 注释
@@ -506,7 +521,7 @@ public class Program {
 				pos++;
 			}
 		}
-				
+
 		// 如果完了，返回结束
 		if (pos == Source.length()) {
 			return new Token(TokenType.End, null, sPos);
@@ -550,7 +565,8 @@ public class Program {
 			String str = Source.substring(oldPos, pos);
 			// 是bool常量
 			if (str.equals("false") || str.equals("true")) {
-				return new Token(TokenType.Bool, Boolean.parseBoolean(str), sPos);
+				return new Token(TokenType.Bool, Boolean.parseBoolean(str),
+						sPos);
 			}
 			if (str == "null") {
 				return new Token(TokenType.Null, null, sPos);
@@ -605,7 +621,12 @@ public class Program {
 				inStrings.push(inString);
 				inString = true;
 			}
-			// 再次进入原来的环节
+			// 碰到'{'，保存当前模式
+			if (Source.charAt(pos) == '{' && inStrings.size() != 0) {
+				inStrings.push(inString);
+				inString = false;
+			}
+			// 碰到'}'，返回前面模式。
 			if (Source.charAt(pos) == '}' && inStrings.size() != 0) {
 				inString = inStrings.pop();
 			}
@@ -613,7 +634,8 @@ public class Program {
 			pos += 1;
 			return new Token(TokenType.Oper, str, sPos);
 		} else {
-			throw new RuntimeException(GetExceptionMessage("无效单词：" + Source.charAt(pos)));
+			throw new RuntimeException(GetExceptionMessage("无效单词："
+					+ Source.charAt(pos)));
 		}
 	}
 }

@@ -23,7 +23,17 @@ public class TestExpression extends TestCase {
 	}
 
 	public void testString() {
-		execute("字符串测试.exp");
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("groupName", "f_parentid");
+		params.put("this", this);
+		execute("字符串测试.exp", params);
+	}
+	
+	public void testString2() {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("f_parentid", 3);
+		params.put("this", this);
+		execute("字符串测试2.exp", params);
 	}
 	
 	public void testComment() {
@@ -87,6 +97,11 @@ public class TestExpression extends TestCase {
 	
 	// call函数，用于函数测试
 	public String call(Object str) {
+		System.out.println(str);
+		return str + "test";
+	}
+
+	public String call(Object str, Map params) {
 		System.out.println(str);
 		return str + "test";
 	}

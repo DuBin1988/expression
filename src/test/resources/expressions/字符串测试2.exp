@@ -1,0 +1,6 @@
+source:
+
+$select { this.call($项目汇总$, {groupName: $f_parentid$}) } 测试$
+
+expected:
+select 项目汇总test 测试
