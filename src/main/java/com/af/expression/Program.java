@@ -23,7 +23,8 @@ public class Program {
 	private Stack<Boolean> inStrings = new Stack<Boolean>();
 
 	public Program(String source) {
-		this.Source = source;
+		String str = source.replaceAll("//[^\n]*", "");
+		this.Source = str;
 	}
 
 	// 调用解析过程

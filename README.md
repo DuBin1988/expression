@@ -1,6 +1,18 @@
 # expression
 
-提供表达式处理。
+提供表达式处理。 
+
+Maven仓库
+
+```
+http://125.76.225.203:3002/nexus/content/repositories/thirdparty/
+```
+
+以如下方式引入
+
+```
+"af:expression:1.1.10",
+```
 
 ## get start
 
