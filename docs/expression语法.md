@@ -94,4 +94,4 @@ a == null:
   $null$,
 a
 ```
-- 逻辑值：常量有'True'和'False'，空值当'False'处理，非空值当'True'处理。
+- 逻辑值：常量有'true'和'false'，空值当'false'处理，非空值当'true'处理。

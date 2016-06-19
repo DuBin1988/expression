@@ -68,8 +68,8 @@ public class Expression {
 			case And: {
 				Expression left = this.children.get(0);
 				Expression right = this.children.get(1);
-				boolean l = Boolean.parseBoolean(left.invoke().toString());
-				boolean r = Boolean.parseBoolean(right.invoke().toString());
+				boolean l = getBoolean(left.invoke());
+				boolean r = getBoolean(right.invoke());
 				switch (type) {
 				case Or:
 					return l || r;
@@ -79,7 +79,7 @@ public class Expression {
 			}
 			case Not: {
 				Expression left = this.children.get(0);
-				boolean l = Boolean.parseBoolean(left.invoke().toString());
+				boolean l = getBoolean(left.invoke());
 				return !l;
 			}
 			case Add: // 算数运算
@@ -178,19 +178,7 @@ public class Expression {
 				return this.delegate.objectNames.get((String) this.value);
 			}
 			case Condition: { // 条件语句
-				// 条件
-				Expression condExp = this.children.get(0);
-				// 为真时表达式
-				Expression isTrue = this.children.get(1);
-				// 为假时表达式
-				Expression isFalse = this.children.get(2);
-				boolean cond = (Boolean) condExp.invoke();
-				// 为真，返回为真的表达式，否则，返回为假的表达式
-				if (cond) {
-					return isTrue.invoke();
-				} else {
-					return isFalse.invoke();
-				}
+				return condition();
 			}
 			case Property: { // 获取属性值
 				return property();
@@ -217,6 +205,25 @@ public class Expression {
 		}
 	}
 
+	// 执行条件处理
+	private Object condition() {
+		// 条件
+		Expression condExp = this.children.get(0);
+		// 为真时表达式
+		Expression isTrue = this.children.get(1);
+		// 为假时表达式
+		Expression isFalse = this.children.get(2);
+		// 如果条件返回的不是bool值，则非空值为真，空值为假
+		Object obj = condExp.invoke();
+		boolean cond = getBoolean(obj); 
+		// 为真，返回为真的表达式，否则，返回为假的表达式
+		if (cond) {
+			return isTrue.invoke();
+		} else {
+			return isFalse.invoke();
+		}
+	}
+	
 	// 执行函数调用
 	private Object call() {
 		Expression objExp = this.children.get(0);
@@ -295,6 +302,18 @@ public class Expression {
 			result.put(name, value);
 		}
 		return result;
+	}
+	
+	// 根据值返回boolean结果
+	private boolean getBoolean(Object obj) {
+		// 如果条件返回的不是bool值，则非空值为真，空值为假
+		boolean cond = false;
+		if (obj instanceof Boolean) {
+			cond = (Boolean)obj;
+		} else {
+			cond = (obj != null);
+		}
+		return cond;
 	}
 	
 	// 产生常数

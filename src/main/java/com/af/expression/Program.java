@@ -485,18 +485,26 @@ public class Program {
 				pos++;
 			return t;
 		}
-		// 读去所有空白
-		while (pos < Source.length() && (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n')) {
-			pos++;
-		}
-		// 如果是 "//" 读去所有注释，到行尾都是注释
-		if (pos < Source.length() - 2 && Source.charAt(pos) == '/' && Source.charAt(pos + 1) == '/') {
-			pos += 2;
-			while (pos < Source.length() && Source.charAt(pos) != '\n') {
+		// 读去所有空白以及注释
+		while (
+				// 普通空白
+				(pos < Source.length() 
+				&& (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n' || Source.charAt(pos) == '\t')) ||
+				// 是注释
+				(pos < Source.length() - 2 && Source.charAt(pos) == '/' && Source.charAt(pos + 1) == '/')) {
+			// 普通空白
+			if (pos < Source.length() 
+					&& (Source.charAt(pos) == ' ' || Source.charAt(pos) == '\n' || Source.charAt(pos) == '\t')) {
+				pos++;
+			} else {
+				// 注释
+				pos += 2;
+				while (pos < Source.length() && Source.charAt(pos) != '\n') {
+					pos++;
+				}
+				// 读掉行尾
 				pos++;
 			}
-			// 读掉行尾
-			pos++;
 		}
 				
 		// 如果完了，返回结束
@@ -541,9 +549,8 @@ public class Program {
 			}
 			String str = Source.substring(oldPos, pos);
 			// 是bool常量
-			if (str == "False" || str == "True") {
-				return new Token(TokenType.Bool, Boolean.parseBoolean(str),
-						sPos);
+			if (str.equals("false") || str.equals("true")) {
+				return new Token(TokenType.Bool, Boolean.parseBoolean(str), sPos);
 			}
 			if (str == "null") {
 				return new Token(TokenType.Null, null, sPos);
