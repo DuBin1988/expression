@@ -32,3 +32,9 @@ d.invoke(params);
 ```
 gradle release
 ```
+
+## 错误报告
+
+编译期及运行期都有错误报告，一次只能报告一个错误。用'<-' 指出错误位置。
+
+[expression语法摘要](docs/expression语法.md)

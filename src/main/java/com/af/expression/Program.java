@@ -49,7 +49,7 @@ public class Program {
 		}
 		this._tokens.offer(t);
 
-		Expression result = Expression.Comma(exps);
+		Expression result = Expression.Comma(exps, Source, pos);
 		return result;
 	}
 
@@ -66,7 +66,7 @@ public class Program {
 			this.inString = false;
 			return Exp();
 		}
-		Expression objExp = Expression.Identy((String) t.Value);
+		Expression objExp = Expression.Identy((String) t.Value, Source, pos);
 		objExp = ObjectPath(objExp);
 
 		// 只能给对象属性或者变量赋值
@@ -90,11 +90,11 @@ public class Program {
 			// 从属性Expression中获取对象及属性名
 			String name = (String) objExp.value;
 			objExp = objExp.children.get(0);
-			Expression assign = Expression.Assign(objExp, exp, name);
+			Expression assign = Expression.Assign(objExp, exp, name, Source, pos);
 			return assign;
 		} else if (objExp.type == ExpressionType.Identy) {
 			// 变量赋值
-			Expression assign = Expression.Assign(null, exp, objExp.value.toString());
+			Expression assign = Expression.Assign(null, exp, objExp.value.toString(), Source, pos);
 			return assign;
 		}
 		throw new RuntimeException(GetExceptionMessage("只能给属性或者变量赋值!"));
@@ -115,7 +115,7 @@ public class Program {
 				// 第二项转换
 				Expression sExp = Exp();
 				// 返回
-				return Expression.Condition(v, result, sExp);
+				return Expression.Condition(v, result, sExp, Source, pos);
 			} else {
 				throw new RuntimeException(GetExceptionMessage("必须有默认值!"));
 			}
@@ -131,21 +131,21 @@ public class Program {
 		// !表达式
 		if (t.Type == TokenType.Oper && t.Value.equals("!")) {
 			Expression exp = Logic();
-			exp = Expression.Not(exp);
+			exp = Expression.Not(exp, Source, pos);
 			return exp;
 		}
 		_tokens.offer(t);
 		Expression v = Compare();
 		t = GetToken();
-		while (t.Type == TokenType.Identy
-				&& (t.Value.equals("and") || t.Value.equals("or"))) {
+		while (t.Type == TokenType.Oper
+				&& (t.Value.equals("&&") || t.Value.equals("||"))) {
 			// 第二项转换
 			Expression exp = Logic();
 			// 执行
-			if (t.Value.equals("and")) {
-				v = Expression.And(v, exp);
+			if (t.Value.equals("&&")) {
+				v = Expression.And(v, exp, Source, pos);
 			} else {
-				v = Expression.Or(v, exp);
+				v = Expression.Or(v, exp, Source, pos);
 			}
 			t = GetToken();
 		}
@@ -163,23 +163,23 @@ public class Program {
 			Expression rExp = Math();
 
 			if (t.Value.equals(">"))
-				return Expression.GreaterThan(left, rExp);
+				return Expression.GreaterThan(left, rExp, Source, pos);
 			if (t.Value.equals(">="))
-				return Expression.GreaterThanOrEqual(left, rExp);
+				return Expression.GreaterThanOrEqual(left, rExp, Source, pos);
 			if (t.Value.equals("<"))
-				return Expression.LessThan(left, rExp);
+				return Expression.LessThan(left, rExp, Source, pos);
 			if (t.Value.equals("<="))
-				return Expression.LessThanOrEqual(left, rExp);
+				return Expression.LessThanOrEqual(left, rExp, Source, pos);
 		} else if (t.Type == TokenType.Oper
 				&& (t.Value.equals("==") || t.Value.equals("!="))) {
 			Expression rExp = Math();
 
 			// 相等比较
 			if (t.Value.equals("==")) {
-				return Expression.Equal(left, rExp);
+				return Expression.Equal(left, rExp, Source, pos);
 			}
 			if (t.Value.equals("!=")) {
-				return Expression.NotEqual(left, rExp);
+				return Expression.NotEqual(left, rExp, Source, pos);
 			}
 		}
 		// 返回当个表达式结果
@@ -198,9 +198,9 @@ public class Program {
 
 			// 开始运算
 			if (t.Value.equals("+")) {
-				v = Expression.Add(v, r);
+				v = Expression.Add(v, r, Source, pos);
 			} else {
-				v = Expression.Subtract(v, r);
+				v = Expression.Subtract(v, r, Source, pos);
 			}
 			t = GetToken();
 		}
@@ -220,11 +220,11 @@ public class Program {
 
 			// 开始运算
 			if (t.Value.equals("*")) {
-				v = Expression.Multiply(v, r);
+				v = Expression.Multiply(v, r, Source, pos);
 			} else if (t.Value.equals("/")) {
-				v = Expression.Divide(v, r);
+				v = Expression.Divide(v, r, Source, pos);
 			} else {
-				v = Expression.Modulo(v, r);
+				v = Expression.Modulo(v, r, Source, pos);
 			}
 			t = GetToken();
 		}
@@ -237,7 +237,7 @@ public class Program {
 		Token t = GetToken();
 		if (t.Type == TokenType.Oper && t.Value.equals("-")) {
 			Expression r = Item();
-			return Expression.Subtract(Expression.Constant(0), r);
+			return Expression.Subtract(Expression.Constant(0, Source, pos), r, Source, pos);
 		}
 		_tokens.offer(t);
 		return Item();
@@ -273,7 +273,7 @@ public class Program {
 			return strExp;
 		} else if (t.Type == TokenType.Int || t.Type == TokenType.Double
 				|| t.Type == TokenType.Bool) {
-			return Expression.Constant(t.Value);
+			return Expression.Constant(t.Value, Source, pos);
 		} else if (t.Type == TokenType.Identy) {
 			String objName = (String) t.Value;
 			// 把对象名返回
@@ -281,7 +281,7 @@ public class Program {
 			// 对象名处理
 			return ObjectName(objName);
 		} else if (t.Type == TokenType.Null) {
-			return Expression.Constant(null);
+			return Expression.Constant(null, Source, pos);
 		}
 		throw new RuntimeException(GetExceptionMessage("单词类型错误，" + t));
 	}
@@ -293,7 +293,7 @@ public class Program {
 		Token t = GetToken();
 		// 空对象，直接返回
 		if (t.Type == TokenType.Oper && t.Value.equals("}")) {
-			return Expression.Json(children);
+			return Expression.Json(children, Source, pos);
 		}
 		
 		_tokens.offer(t);
@@ -308,7 +308,7 @@ public class Program {
 			throw new RuntimeException(GetExceptionMessage("必须是'}'"));
 		}
 		
-		return Expression.Json(children);
+		return Expression.Json(children, Source, pos);
 	}
 	
 	// 属性值对::=属性名: 属性值
@@ -322,20 +322,20 @@ public class Program {
 			throw new RuntimeException(GetExceptionMessage("必须是':'"));
 		}
 		Expression exp = Exp();
-		return Expression.Attr(name.Value.toString(), exp);
+		return Expression.Attr(name.Value.toString(), exp, Source, pos);
 	}
 	
 	// 对字符串拼接序列进行解析
 	private Expression StringUnion() {
 		// 字符串连接方法
-		Expression exp = Expression.Constant("");
+		Expression exp = Expression.Constant("", Source, pos);
 		Token t = GetToken();
 		// 是对象序列
 		while ((t.Type == TokenType.Oper && t.Value.equals("{"))
 				|| t.Type == TokenType.String) {
 			// 字符串，返回字符串连接结果
 			if (t.Type == TokenType.String) {
-				exp = Expression.Concat(exp, Expression.Constant(t.Value));
+				exp = Expression.Concat(exp, Expression.Constant(t.Value, Source, pos), Source, pos);
 			} else {
 				// 按表达式调用{}里面的内容
 				Expression objExp = Exp();
@@ -344,7 +344,7 @@ public class Program {
 					throw new RuntimeException(GetExceptionMessage("缺少'}'"));
 				}
 				// 字符串连接
-				exp = Expression.Concat(exp, objExp);
+				exp = Expression.Concat(exp, objExp, Source, pos);
 			}
 			t = GetToken();
 		}
@@ -354,7 +354,7 @@ public class Program {
 
 	// 根据名称获取对象以及对象表达式
 	private Expression ObjectName(String objName) {
-		Expression objExp = Expression.Identy(objName);
+		Expression objExp = Expression.Identy(objName, Source, pos);
 		return objExp;
 	}
 
@@ -374,7 +374,7 @@ public class Program {
 				_tokens.offer(n);
 				// 取属性
 				String pi = (String) nameToken.Value;
-				objExp = Expression.Property(objExp, pi);
+				objExp = Expression.Property(objExp, pi, Source, pos);
 				// 调用条件过滤解析，产生条件过滤结果
 				objExp = ObjPath(objExp);
 			}
@@ -398,8 +398,8 @@ public class Program {
 			}
 			// 产生条件过滤调用函数
 			List<Expression> params = new LinkedList<Expression>();
-			params.add(Expression.Constant(exp.Compile()));
-			Expression result = Expression.Call(objExp, "Where", params);
+			params.add(Expression.Constant(exp.Compile(), Source, pos));
+			Expression result = Expression.Call(objExp, "Where", params, Source, pos);
 			return result;
 		}
 		_tokens.offer(n);
@@ -413,7 +413,7 @@ public class Program {
 		if (t.Type != TokenType.Oper || !t.Value.equals(")")) {
 			throw new RuntimeException(GetExceptionMessage("函数调用括号不匹配"));
 		}
-		Expression result = Expression.Call(obj, name, ps);
+		Expression result = Expression.Call(obj, name, ps, Source, pos);
 
 		return result;
 	}
@@ -438,7 +438,7 @@ public class Program {
 	private void procParam(List<Expression> ps, Expression exp) {
 		Delegate delegate = exp.Compile();
 		if (delegate.objectNames.containsKey("data")) {
-			ps.add(Expression.Constant(delegate));
+			ps.add(Expression.Constant(delegate, Source, pos));
 		} else {
 			ps.add(exp);
 		}
@@ -549,6 +549,13 @@ public class Program {
 				return new Token(TokenType.Null, null, sPos);
 			}
 			return new Token(TokenType.Identy, str, sPos);
+		}
+		// && 及 ||
+		else if ((Source.charAt(pos) == '&' && Source.charAt(pos + 1) == '&')
+				|| (Source.charAt(pos) == '|' && Source.charAt(pos + 1) == '|')) {
+			String str = Source.substring(pos, pos + 2);
+			pos += 2;
+			return new Token(TokenType.Oper, str, sPos);
 		}
 		// +、-、*、/、>、<、!等后面可以带=的处理
 		else if (Source.charAt(pos) == '+' || Source.charAt(pos) == '-'

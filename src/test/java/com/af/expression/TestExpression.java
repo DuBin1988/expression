@@ -30,6 +30,10 @@ public class TestExpression extends TestCase {
 		execute("注释测试.exp");
 	}
 	
+	public void testCondition() {
+		execute("条件表达式.exp");
+	}	
+
 	// 不带参数执行并检查结果
 	private void execute(String name) {
 		execute(name, new HashMap<String, Object>());

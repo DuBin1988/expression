@@ -1,6 +1,6 @@
 # expression语法
 
-expression是一个纯表达式脚本语言，用来做业务处理逻辑。主要特点有：
+expression是一个纯表达式脚本语言，用来做业务处理逻辑，基本语法与JavaScript一致。主要特点有：
 
 1. 只有表达式处理，没有其它内容。
 
@@ -84,3 +84,14 @@ user = {
 },
 a = $用户名字为：{user.name}$
 ```
+
+## 数据类型
+
+- 数字：所有数字均按照BigDecimal处理，不区分int，long，float，double等类型。
+- null：空值常数为 `null` 例如：
+```
+a == null:
+  $null$,
+a
+```
+- 逻辑值：常量有'True'和'False'，空值当'False'处理，非空值当'True'处理。

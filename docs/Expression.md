@@ -27,6 +27,8 @@ list.sum(data.age + a)
 - value：节点值，随节点类型不同，具体参考下面描述。
 - children：节点子，随节点类型不同，具体参考下面描述。
 - delegate：运行时环境，包括参数及局部变量内容。
+- source：节点对应的源码。
+- pos：节点在源码中的位置。
 
 ## Delegate 属性
 

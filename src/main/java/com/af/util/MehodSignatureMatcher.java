@@ -131,7 +131,7 @@ public class MehodSignatureMatcher {
 	 */
 	public static Method getMatchingMethod(final Class<?> clazz, String methodName,
 	    final Object[] args) throws Exception{
-        for(final Method method : clazz.getDeclaredMethods()){
+        for(final Method method : clazz.getMethods()){
             if(method.getName().equals(methodName) && isCompatible(method, args)){
                 return method;
             }
