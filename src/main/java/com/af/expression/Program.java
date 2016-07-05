@@ -375,7 +375,12 @@ public class Program {
 			Token n = GetToken();
 			if (n.Type == TokenType.Oper && n.Value.equals("(")) {
 				String name = (String) nameToken.Value;
-				objExp = MethodCall(name, objExp);
+				// each方法当循环使用
+				if(name.equals("each")) {
+					objExp = For(name, objExp);
+				} else {
+					objExp = MethodCall(name, objExp);
+				}
 			} else {
 				_tokens.offer(n);
 				// 取属性
@@ -410,6 +415,18 @@ public class Program {
 		return objExp;
 	}
 
+	// For循环
+	private Expression For(String name, Expression obj) {
+		// 产生完整的逗号表达式
+		Expression exp = this.CommaExp();
+		Token t = GetToken();
+		if (t.Type != TokenType.Oper || !t.Value.equals(")")) {
+			throw new RuntimeException(GetExceptionMessage("函数调用括号不匹配"));
+		}
+		Expression result = Expression.For(obj, exp, Source, pos);
+		return result;
+	}
+	
 	// 函数调用
 	private Expression MethodCall(String name, Expression obj) {
 		// 如果是")"，调用无参函数处理

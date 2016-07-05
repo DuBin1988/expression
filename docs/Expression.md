@@ -6,20 +6,18 @@
 
 所有AST树节点共享同一个delegate，delegate中存放有变量值，参数值。变量作用域为全局作用域。每个节点都有一个delegate属性，指向公共的delegate。delegate执行前，沿Expression树把自己注入到每个Expression节点中。
 
-### 局部编译
+### 数组遍历
 
-sum求和等函数，可以按如下方式书写：
-
-```
-list.sum(data.age + 10)
-```
-这时，sum函数内部的 `data.age + 10` 需要进行局部编译，局部编译的data代表列表中每项数据。  
-__注意:__ 局部编译部分目前不支持全局变量。也就是下面的过程无法执行：
+each函数用于对数组里的对象进行遍历，写法如下：
 
 ```
-a = 5,
-list.sum(data.age + a)
+a = 0,
+list.each(
+	a += row.age
+)
 ```
+
+每次执行循环时，把数组里的对象给参数row。
 
 ## Expression 属性
 

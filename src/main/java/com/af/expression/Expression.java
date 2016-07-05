@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONObject;
 
 import com.af.util.MehodSignatureMatcher;
 
@@ -191,6 +192,9 @@ public class Expression {
 			case Call: { // 函数调用
 				return call();
 			}
+			case For: { // for循环
+				return loop();
+			}
 			case Assign: { // 属性赋值
 				return assign();
 			}
@@ -227,6 +231,20 @@ public class Expression {
 		} else {
 			return isFalse.invoke();
 		}
+	}
+	
+	// 执行for循环
+	private Object loop() throws Exception {
+		Expression objExp = this.children.get(0);
+		// 获取对象，for循环只针对JSONArray
+		JSONArray array = (JSONArray)objExp.invoke();
+		// 获取循环体，循环体中row代表每一项对象, 把对象传递给循环体执行
+		Expression body = this.children.get(1);
+		for (int i = 0; i < array.length(); i++) {
+			body.delegate.objectNames.put("row", array.get(i));
+			body.invoke();
+		}
+		return null;
 	}
 	
 	// 执行函数调用
@@ -292,7 +310,13 @@ public class Expression {
 		if (obj.getClass() == HashMap.class) {
 			Map<String, Object> map = (Map<String, Object>)obj;
 			return map.get(name);
-		} else {
+		} 
+		// 是JSONObject
+		else if (obj instanceof JSONObject) {
+			JSONObject json = (JSONObject)obj;
+			return json.get(name);
+		}
+		else {
 			// 利用反射机制获得属性值
 			return obj.getClass().getField(name).get(obj);
 		}
@@ -537,6 +561,14 @@ public class Expression {
 		Expression result = new Expression(ExpressionType.ArrayIndex, source, pos);
 		result.children.add(objExp);
 		result.children.add(indexExp);
+		return result;
+	}
+	
+	// 产生for循环
+	public static Expression For(Expression objExp, Expression forExp, String source, int pos) {
+		Expression result = new Expression(ExpressionType.For, source, pos);
+		result.children.add(objExp);
+		result.children.add(forExp);
 		return result;
 	}
 }

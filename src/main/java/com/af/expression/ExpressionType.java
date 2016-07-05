@@ -32,7 +32,8 @@ public enum ExpressionType {
 	ArrayIndex,		//数组下标，[0]
 	
 	Call,			//函数调用
-
+	For,			//for循环
+	
 	Comma,			//逗号表达式
 
 	Assign,			//赋值语句
