@@ -1,10 +1,21 @@
 source:
 
 a = {
-  name: $abc$,
-  age: 5
+
+sumbalance: 100.2, 
+gasPriceOne: 100,
+gasNumOne: 10,
+gasFeeOne: 200.23,
+gasPriceTwo: 0.00, 
+gasNumTwo: 0, 
+gasFeeTwo: 0.01,
+gasPriceThree: 0.32, 
+gasNumThree: 3, 
+gasFeeThree: 3.10
+
 },
-b = a.age * 2
+
+a.gasPriceOne
 
 expected:
-10.0
+100

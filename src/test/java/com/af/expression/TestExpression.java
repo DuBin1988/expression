@@ -44,6 +44,14 @@ public class TestExpression extends TestCase {
 		execute("条件表达式.exp");
 	}	
 
+	public void testJson() {
+		execute("JSON对象.exp");
+	}	
+
+	public void testVar() {
+		execute("变量赋值.exp");
+	}	
+
 	// 不带参数执行并检查结果
 	private void execute(String name) {
 		execute(name, new HashMap<String, Object>());
@@ -96,9 +104,18 @@ public class TestExpression extends TestCase {
 	}
 	
 	// call函数，用于函数测试
+	public String call(Object str, String str2) {
+		System.out.println(str);
+		return str + "test" + str2;
+	}
+
 	public String call(Object str) {
 		System.out.println(str);
 		return str + "test";
+	}
+
+	public String call() {
+		return "test";
 	}
 
 	public String call(Object str, Map params) {

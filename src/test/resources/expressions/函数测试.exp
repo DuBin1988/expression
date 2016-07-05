@@ -1,6 +1,6 @@
 source:
 
-a = this.call($这是一个函数测试$)
+this.call($abc$, $def$)
 
 expected:
-这是一个函数测试test
+abctestdef

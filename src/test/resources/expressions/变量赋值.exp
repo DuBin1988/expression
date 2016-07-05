@@ -1,8 +1,8 @@
 source:
 
-a = 5,
+a = 5.5,
 b = 6,
 a = a + b
 
 expected:
-11.0
+11.5

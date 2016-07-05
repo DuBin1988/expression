@@ -309,7 +309,7 @@ public class Program {
 			children.add(Attr());
 			t = GetToken();
 		}
-		if (t.Type != TokenType.Oper && t.Value.equals("}")) {
+		if (t.Type != TokenType.Oper || !t.Value.equals("}")) {
 			throw new RuntimeException(GetExceptionMessage("必须是'}'"));
 		}
 
@@ -366,7 +366,7 @@ public class Program {
 
 	private Expression ObjectPath(Expression inExp) {
 		// 调用条件过滤解析，转换出条件过滤结果
-		Expression objExp = ObjPath(inExp);
+		Expression objExp = ArrayIndex(inExp);
 		Token t = GetToken();
 		while (t.Type == TokenType.Oper && t.Value.equals(".")) {
 			// 获取对象成员
@@ -382,7 +382,7 @@ public class Program {
 				String pi = (String) nameToken.Value;
 				objExp = Expression.Property(objExp, pi, Source, pos);
 				// 调用条件过滤解析，产生条件过滤结果
-				objExp = ObjPath(objExp);
+				objExp = ArrayIndex(objExp);
 			}
 			t = GetToken();
 		}
@@ -391,10 +391,10 @@ public class Program {
 		return objExp;
 	}
 
-	// 对象单个路径=属性名([条件])?
-	private Expression ObjPath(Expression objExp) {
+	// 数组下标=属性名([条件])?
+	private Expression ArrayIndex(Expression objExp) {
 		Token n = GetToken();
-		// 是条件判断
+		// 是数组下标
 		if (n.Type == TokenType.Oper && n.Value.equals("[")) {
 			Expression exp = Exp();
 			// 读掉']'
@@ -402,11 +402,8 @@ public class Program {
 			if (n.Type != TokenType.Oper || !n.Value.equals("]")) {
 				throw new RuntimeException(GetExceptionMessage("缺少']'"));
 			}
-			// 产生条件过滤调用函数
-			List<Expression> params = new LinkedList<Expression>();
-			params.add(Expression.Constant(exp.Compile(), Source, pos));
-			Expression result = Expression.Call(objExp, "Where", params,
-					Source, pos);
+			// 产生数组下标节点
+			Expression result = Expression.ArrayIndex(objExp, exp, Source, pos);
 			return result;
 		}
 		_tokens.offer(n);
@@ -415,8 +412,17 @@ public class Program {
 
 	// 函数调用
 	private Expression MethodCall(String name, Expression obj) {
-		List<Expression> ps = Params();
+		// 如果是")"，调用无参函数处理
 		Token t = GetToken();
+		if (t.Type == TokenType.Oper && t.Value.equals(")")) {
+			List<Expression> ps = new ArrayList<Expression>();
+			Expression result = Expression.Call(obj, name, ps, Source, pos);
+			return result;
+		}
+		
+		_tokens.offer(t);
+		List<Expression> ps = Params();
+		t = GetToken();
 		if (t.Type != TokenType.Oper || !t.Value.equals(")")) {
 			throw new RuntimeException(GetExceptionMessage("函数调用括号不匹配"));
 		}
@@ -541,9 +547,7 @@ public class Program {
 						&& Source.charAt(pos) <= '9') {
 					pos++;
 				}
-				// 位置还原，以便下次读取
-				pos--;
-				String str = Source.substring(oldPos, pos + 1);
+				String str = Source.substring(oldPos, pos);
 				return new Token(TokenType.Double, Double.parseDouble(str),
 						sPos);
 			} else {

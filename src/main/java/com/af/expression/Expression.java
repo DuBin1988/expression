@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jettison.json.JSONArray;
+
 import com.af.util.MehodSignatureMatcher;
 
 public class Expression {
@@ -161,9 +163,9 @@ public class Expression {
 				Object r = right.invoke();
 				switch (type) {
 				case Equal:
-					return l.equals(r);
+					return l.toString().equals(r.toString());
 				case NotEqual:
-					return !l.equals(r);
+					return !l.toString().equals(r.toString());
 				}
 			}
 			case Constant: { // 常数
@@ -182,6 +184,9 @@ public class Expression {
 			}
 			case Property: { // 获取属性值
 				return property();
+			}
+			case ArrayIndex: { // 获取数组元素
+				return arrayIndex();
 			}
 			case Call: { // 函数调用
 				return call();
@@ -291,6 +296,22 @@ public class Expression {
 			// 利用反射机制获得属性值
 			return obj.getClass().getField(name).get(obj);
 		}
+	}
+	
+	// 获取数组元素
+	private Object arrayIndex() throws Exception {
+		Expression objExp = this.children.get(0);
+		Expression indexExp = this.children.get(1);
+		// 获取对象
+		Object obj = objExp.invoke();
+		// 获取下标值
+		int index = Integer.parseInt(indexExp.invoke().toString());
+		// 如果对象为JSONArray，调用JSONArray的方法
+		if (obj instanceof JSONArray) {
+			JSONArray array = (JSONArray)obj;
+			return array.get(index);
+		}
+		throw new ExpressionException(this.source, this.pos);
 	}
 	
 	// 返回Json对象的结果，返回一个Map
@@ -508,6 +529,14 @@ public class Expression {
 		Expression result = new Expression(ExpressionType.Concat, source, pos);
 		result.children.add(left);
 		result.children.add(right);
+		return result;
+	}
+	
+	// 产生数组下标
+	public static Expression ArrayIndex(Expression objExp, Expression indexExp, String source, int pos) {
+		Expression result = new Expression(ExpressionType.ArrayIndex, source, pos);
+		result.children.add(objExp);
+		result.children.add(indexExp);
 		return result;
 	}
 }

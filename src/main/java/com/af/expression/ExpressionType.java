@@ -29,6 +29,8 @@ public enum ExpressionType {
 	Json,			//产生Json对象
 	Attr,			//Json对象属性值对
 	
+	ArrayIndex,		//数组下标，[0]
+	
 	Call,			//函数调用
 
 	Comma,			//逗号表达式
