@@ -1,5 +1,6 @@
 package com.af.expression;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -565,7 +566,7 @@ public class Program {
 					pos++;
 				}
 				String str = Source.substring(oldPos, pos);
-				return new Token(TokenType.Double, Double.parseDouble(str),
+				return new Token(TokenType.Double, new BigDecimal(str),
 						sPos);
 			} else {
 				String str = Source.substring(oldPos, pos);

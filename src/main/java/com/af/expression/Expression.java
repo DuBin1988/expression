@@ -25,7 +25,7 @@ public class Expression {
 
 	// 运行时对应的Delegate，Delegate中保存有实参
 	public Delegate delegate;
-	
+
 	// 节点对应的源程序及位置
 	private String source;
 	private int pos;
@@ -42,13 +42,13 @@ public class Expression {
 		this.source = source;
 		this.pos = pos;
 	}
-	
+
 	// 覆盖toString方法，显示树状的节点信息，方便调试
 	@Override
 	public String toString() {
 		// 显示自己的类型及名称
-		String result = "type: " + this.type + ", value: " + 
-				(this.value != null ? this.value.toString() : "null") + "[\n";
+		String result = "type: " + this.type + ", value: "
+				+ (this.value != null ? this.value.toString() : "null") + "[\n";
 		// 递归显示子
 		for (Expression child : this.children) {
 			result += (child != null ? child.toString() : "null\n");
@@ -56,7 +56,7 @@ public class Expression {
 		result += "]";
 		return result;
 	}
-	
+
 	// 编译，产生可执行单元Delegate
 	public Delegate Compile() {
 		Delegate result = new Delegate(this);
@@ -90,22 +90,7 @@ public class Expression {
 			case Multiply:
 			case Divide:
 			case Modulo: {
-				Expression left = this.children.get(0);
-				Expression right = this.children.get(1);
-				BigDecimal l = new BigDecimal(left.invoke().toString());
-				BigDecimal r = new BigDecimal(right.invoke().toString());
-				switch (type) {
-				case Add:
-					return l.add(r);
-				case Subtract:
-					return l.subtract(r);
-				case Multiply:
-					return l.multiply(r);
-				case Divide:
-					return l.divide(r);
-				case Modulo:
-					return new BigDecimal(l.intValue() % r.intValue());
-				}
+				return math();
 			}
 			case Concat: { // 字符串连接
 				Expression left = this.children.get(0);
@@ -114,7 +99,7 @@ public class Expression {
 				Object r = right.invoke();
 				return l.toString() + r.toString();
 			}
-			case Json: {	// 返回Json对象
+			case Json: { // 返回Json对象
 				return Json();
 			}
 			case GreaterThan: // 比较运算
@@ -171,7 +156,8 @@ public class Expression {
 			}
 			case Constant: { // 常数
 				// 数字
-				if (this.value instanceof Double || this.value instanceof Integer) {
+				if (this.value instanceof Double
+						|| this.value instanceof Integer) {
 					return new BigDecimal(this.value.toString());
 				}
 				// 其它常数，直接返回值
@@ -200,7 +186,7 @@ public class Expression {
 			}
 			case Comma: { // 逗号表达式
 				Object value = 0;
-				for(Expression child : this.children) {
+				for (Expression child : this.children) {
 					value = child.invoke();
 				}
 				return value;
@@ -214,6 +200,49 @@ public class Expression {
 		}
 	}
 
+	// 执行数学运算
+	private Object math() {
+		Expression left = this.children.get(0);
+		Expression right = this.children.get(1);
+		Object oLeft = left.invoke();
+		Object oRight = right.invoke();
+
+		// 只要有BigDecimal，按BigDecimal计算，否则，按int计算
+		if (oLeft instanceof BigDecimal || oRight instanceof BigDecimal) {
+			BigDecimal l = new BigDecimal(left.invoke().toString());
+			BigDecimal r = new BigDecimal(right.invoke().toString());
+			switch (type) {
+			case Add:
+				return l.add(r);
+			case Subtract:
+				return l.subtract(r);
+			case Multiply:
+				return l.multiply(r);
+			case Divide:
+				return l.divide(r);
+			case Modulo:
+				return new BigDecimal(l.intValue() % r.intValue());
+			}
+		} else {
+			int l = new Integer(left.invoke().toString());
+			int r = new Integer(right.invoke().toString());
+			switch (type) {
+			case Add:
+				return l + r;
+			case Subtract:
+				return l - r;
+			case Multiply:
+				return l * r;
+			case Divide:
+				return l / r;
+			case Modulo:
+				return l % r;
+			}
+		}
+
+		throw new RuntimeException("不识别的算数操作符");
+	}
+
 	// 执行条件处理
 	private Object condition() {
 		// 条件
@@ -224,7 +253,7 @@ public class Expression {
 		Expression isFalse = this.children.get(2);
 		// 如果条件返回的不是bool值，则非空值为真，空值为假
 		Object obj = condExp.invoke();
-		boolean cond = getBoolean(obj); 
+		boolean cond = getBoolean(obj);
 		// 为真，返回为真的表达式，否则，返回为假的表达式
 		if (cond) {
 			return isTrue.invoke();
@@ -232,12 +261,12 @@ public class Expression {
 			return isFalse.invoke();
 		}
 	}
-	
+
 	// 执行for循环
 	private Object loop() throws Exception {
 		Expression objExp = this.children.get(0);
 		// 获取对象，for循环只针对JSONArray
-		JSONArray array = (JSONArray)objExp.invoke();
+		JSONArray array = (JSONArray) objExp.invoke();
 		// 获取循环体，循环体中row代表每一项对象, 把对象传递给循环体执行
 		Expression body = this.children.get(1);
 		for (int i = 0; i < array.length(); i++) {
@@ -246,7 +275,7 @@ public class Expression {
 		}
 		return null;
 	}
-	
+
 	// 执行函数调用
 	private Object call() {
 		Expression objExp = this.children.get(0);
@@ -267,10 +296,25 @@ public class Expression {
 		}
 		try {
 			// 利用反射机制获得函数
-			Method method = MehodSignatureMatcher.getMatchingMethod(obj.getClass(), name, types);
-			return method.invoke(obj, params.toArray());
+			Method method = MehodSignatureMatcher.getMatchingMethod(
+					obj.getClass(), name, types);
+			// 函数返回的double转BigDecimal，整形等转int
+			Object oCall = method.invoke(obj, params.toArray());
+			return convert(oCall);
 		} catch (Exception e) {
 			throw new RuntimeException("函数调用错误：" + name, e);
+		}
+	}
+
+	// 对函数或者取属性结果进行转换，double转换成Decimal，整数转换成 int
+	private Object convert(Object source) {
+		if (source instanceof Double) {
+			return new BigDecimal(source.toString());
+		} else if (source instanceof Byte || source instanceof Short
+				|| source instanceof Integer || source instanceof Long) {
+			return new Integer(source.toString());
+		} else {
+			return source;
 		}
 	}
 	
@@ -298,7 +342,7 @@ public class Expression {
 		}
 		return value;
 	}
-	
+
 	// 获取对象属性
 	private Object property() throws Exception {
 		Expression objExp = this.children.get(0);
@@ -306,22 +350,25 @@ public class Expression {
 		Object obj = objExp.invoke();
 		// 属性名
 		String name = (String) this.value;
+		
+		Object rObj = null;
 		// 是Map
 		if (obj.getClass() == HashMap.class) {
-			Map<String, Object> map = (Map<String, Object>)obj;
-			return map.get(name);
-		} 
+			Map<String, Object> map = (Map<String, Object>) obj;
+			rObj = map.get(name);
+		}
 		// 是JSONObject
 		else if (obj instanceof JSONObject) {
-			JSONObject json = (JSONObject)obj;
-			return json.get(name);
-		}
-		else {
+			JSONObject json = (JSONObject) obj;
+			rObj = json.get(name);
+		} else {
 			// 利用反射机制获得属性值
-			return obj.getClass().getField(name).get(obj);
+			rObj =  obj.getClass().getField(name).get(obj);
 		}
+		
+		return convert(rObj);
 	}
-	
+
 	// 获取数组元素
 	private Object arrayIndex() throws Exception {
 		Expression objExp = this.children.get(0);
@@ -332,15 +379,16 @@ public class Expression {
 		int index = Integer.parseInt(indexExp.invoke().toString());
 		// 如果对象为JSONArray，调用JSONArray的方法
 		if (obj instanceof JSONArray) {
-			JSONArray array = (JSONArray)obj;
-			return array.get(index);
+			JSONArray array = (JSONArray) obj;
+			Object oRet = array.get(index);
+			return convert(oRet);
 		}
 		throw new ExpressionException(this.source, this.pos);
 	}
-	
-	// 返回Json对象的结果，返回一个Map
-	private Object Json() {
-		Map<String, Object> result = new HashMap<String, Object>();
+
+	// 返回Json对象的结果，返回一个Json对象
+	private Object Json() throws Exception {
+		JSONObject result = new JSONObject();
 		for (Expression child : this.children) {
 			String name = child.value.toString();
 			Object value = child.children.get(0).invoke();
@@ -348,34 +396,38 @@ public class Expression {
 		}
 		return result;
 	}
-	
+
 	// 根据值返回boolean结果
 	private boolean getBoolean(Object obj) {
 		// 如果条件返回的不是bool值，则非空值为真，空值为假
 		boolean cond = false;
 		if (obj instanceof Boolean) {
-			cond = (Boolean)obj;
+			cond = (Boolean) obj;
 		} else {
 			cond = (obj != null);
 		}
 		return cond;
 	}
-	
+
 	// 产生常数
 	public static Expression Constant(Object value, String source, int pos) {
-		Expression result = new Expression(ExpressionType.Constant, value, source, pos);
+		Expression result = new Expression(ExpressionType.Constant, value,
+				source, pos);
 		return result;
 	}
 
 	// 产生标识符
 	public static Expression Identy(Object value, String source, int pos) {
-		Expression result = new Expression(ExpressionType.Identy, value, source, pos);
+		Expression result = new Expression(ExpressionType.Identy, value,
+				source, pos);
 		return result;
 	}
 
 	// 获取对象属性
-	public static Expression Property(Expression objExp, String name, String source, int pos) {
-		Expression result = new Expression(ExpressionType.Property, name, source, pos);
+	public static Expression Property(Expression objExp, String name,
+			String source, int pos) {
+		Expression result = new Expression(ExpressionType.Property, name,
+				source, pos);
 		result.children.add(objExp);
 		return result;
 	}
@@ -383,32 +435,36 @@ public class Expression {
 	// 产生Json对象，value=null, children=属性值对
 	public static Expression Json(List<Expression> attrs, String source, int pos) {
 		Expression result = new Expression(ExpressionType.Json, source, pos);
-		for(Expression exp : attrs) {
+		for (Expression exp : attrs) {
 			result.children.add(exp);
 		}
 		return result;
 	}
-	
+
 	// 产生属性表达式，value=属性名，children[0]=属性值
-	public static Expression Attr(String name, Expression value, String source, int pos) {
+	public static Expression Attr(String name, Expression value, String source,
+			int pos) {
 		Expression result = new Expression(ExpressionType.Attr, source, pos);
 		result.value = name;
 		result.children.add(value);
 		return result;
 	}
-	
+
 	// 逗号表达式, value=null, children=各表达式
-	public static Expression Comma(List<Expression> children, String source, int pos) {
+	public static Expression Comma(List<Expression> children, String source,
+			int pos) {
 		Expression result = new Expression(ExpressionType.Comma, source, pos);
-		for(Expression exp : children) {
+		for (Expression exp : children) {
 			result.children.add(exp);
 		}
 		return result;
 	}
 
 	// 赋值语句，value=属性名/变量名，child[0]=赋值对象，child[1]=赋值内容
-	public static Expression Assign(Expression objExp, Expression exp, String name, String source, int pos) {
-		Expression result = new Expression(ExpressionType.Assign, name, source, pos);
+	public static Expression Assign(Expression objExp, Expression exp,
+			String name, String source, int pos) {
+		Expression result = new Expression(ExpressionType.Assign, name, source,
+				pos);
 		result.children.add(objExp);
 		result.children.add(exp);
 		return result;
@@ -417,7 +473,8 @@ public class Expression {
 	// 函数调用
 	public static Expression Call(Expression objExp, String name,
 			List<Expression> params, String source, int pos) {
-		Expression result = new Expression(ExpressionType.Call, name, source, pos);
+		Expression result = new Expression(ExpressionType.Call, name, source,
+				pos);
 		result.children.add(objExp);
 		// 把所有参数加入函数调用子中
 		for (Expression param : params) {
@@ -429,7 +486,8 @@ public class Expression {
 	// 产生一个条件语句, test:条件，ifTrue:为真时结果，ifFalse:为假时结果
 	public static Expression Condition(Expression test, Expression ifTrue,
 			Expression ifFalse, String source, int pos) {
-		Expression result = new Expression(ExpressionType.Condition, source, pos);
+		Expression result = new Expression(ExpressionType.Condition, source,
+				pos);
 		result.children.add(test);
 		result.children.add(ifTrue);
 		result.children.add(ifFalse);
@@ -444,7 +502,8 @@ public class Expression {
 	}
 
 	// 产生逻辑与语句
-	public static Expression And(Expression left, Expression right, String source, int pos) {
+	public static Expression And(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.And, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -452,7 +511,8 @@ public class Expression {
 	}
 
 	// 产生逻辑或语句
-	public static Expression Or(Expression left, Expression right, String source, int pos) {
+	public static Expression Or(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Or, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -460,8 +520,10 @@ public class Expression {
 	}
 
 	// 产生>比较运算
-	public static Expression GreaterThan(Expression left, Expression right, String source, int pos) {
-		Expression result = new Expression(ExpressionType.GreaterThan, source, pos);
+	public static Expression GreaterThan(Expression left, Expression right,
+			String source, int pos) {
+		Expression result = new Expression(ExpressionType.GreaterThan, source,
+				pos);
 		result.children.add(left);
 		result.children.add(right);
 		return result;
@@ -470,14 +532,16 @@ public class Expression {
 	// 产生>=比较运算
 	public static Expression GreaterThanOrEqual(Expression left,
 			Expression right, String source, int pos) {
-		Expression result = new Expression(ExpressionType.GreaterThanOrEqual, source, pos);
+		Expression result = new Expression(ExpressionType.GreaterThanOrEqual,
+				source, pos);
 		result.children.add(left);
 		result.children.add(right);
 		return result;
 	}
 
 	// 产生<比较运算
-	public static Expression LessThan(Expression left, Expression right, String source, int pos) {
+	public static Expression LessThan(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.LessThan, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -485,15 +549,18 @@ public class Expression {
 	}
 
 	// 产生<=比较运算
-	public static Expression LessThanOrEqual(Expression left, Expression right, String source, int pos) {
-		Expression result = new Expression(ExpressionType.LessThanOrEqual, source, pos);
+	public static Expression LessThanOrEqual(Expression left, Expression right,
+			String source, int pos) {
+		Expression result = new Expression(ExpressionType.LessThanOrEqual,
+				source, pos);
 		result.children.add(left);
 		result.children.add(right);
 		return result;
 	}
 
 	// 产生==比较运算
-	public static Expression Equal(Expression left, Expression right, String source, int pos) {
+	public static Expression Equal(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Equal, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -501,7 +568,8 @@ public class Expression {
 	}
 
 	// 产生!=比较运算
-	public static Expression NotEqual(Expression left, Expression right, String source, int pos) {
+	public static Expression NotEqual(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.NotEqual, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -509,7 +577,8 @@ public class Expression {
 	}
 
 	// 产生+运算
-	public static Expression Add(Expression left, Expression right, String source, int pos) {
+	public static Expression Add(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Add, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -517,7 +586,8 @@ public class Expression {
 	}
 
 	// 产生-运算
-	public static Expression Subtract(Expression left, Expression right, String source, int pos) {
+	public static Expression Subtract(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Subtract, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -525,7 +595,8 @@ public class Expression {
 	}
 
 	// 产生*运算
-	public static Expression Multiply(Expression left, Expression right, String source, int pos) {
+	public static Expression Multiply(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Multiply, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -533,7 +604,8 @@ public class Expression {
 	}
 
 	// 产生除法运算
-	public static Expression Divide(Expression left, Expression right, String source, int pos) {
+	public static Expression Divide(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Divide, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -541,7 +613,8 @@ public class Expression {
 	}
 
 	// 产生求余运算
-	public static Expression Modulo(Expression left, Expression right, String source, int pos) {
+	public static Expression Modulo(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Modulo, source, pos);
 		result.children.add(left);
 		result.children.add(right);
@@ -549,23 +622,27 @@ public class Expression {
 	}
 
 	// 产生字符串连接运算
-	public static Expression Concat(Expression left, Expression right, String source, int pos) {
+	public static Expression Concat(Expression left, Expression right,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.Concat, source, pos);
 		result.children.add(left);
 		result.children.add(right);
 		return result;
 	}
-	
+
 	// 产生数组下标
-	public static Expression ArrayIndex(Expression objExp, Expression indexExp, String source, int pos) {
-		Expression result = new Expression(ExpressionType.ArrayIndex, source, pos);
+	public static Expression ArrayIndex(Expression objExp, Expression indexExp,
+			String source, int pos) {
+		Expression result = new Expression(ExpressionType.ArrayIndex, source,
+				pos);
 		result.children.add(objExp);
 		result.children.add(indexExp);
 		return result;
 	}
-	
+
 	// 产生for循环
-	public static Expression For(Expression objExp, Expression forExp, String source, int pos) {
+	public static Expression For(Expression objExp, Expression forExp,
+			String source, int pos) {
 		Expression result = new Expression(ExpressionType.For, source, pos);
 		result.children.add(objExp);
 		result.children.add(forExp);

@@ -13,7 +13,7 @@ each函数用于对数组里的对象进行遍历，写法如下：
 ```
 a = 0,
 list.each(
-	a += row.age
+	a = a + row.age
 )
 ```
 
