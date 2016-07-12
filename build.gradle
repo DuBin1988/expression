@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 
-version = '1.1.15'
+version = '1.1.16'
 
 repositories {
 	mavenLocal()
@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
 	compile(
-		"org.glassfish.jersey.media:jersey-media-json-jettison:2.22.2",
+		"org.json:json:20160212",
 	)
 
 	testCompile(
