@@ -10,6 +10,14 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 public class TestExpression extends TestCase {
+	public void testMath() {
+		execute("数学运算.exp");
+	}
+	
+	public void testValue() {
+		execute("单个值.exp");
+	}
+	
 	public void testParam() {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("a", 5);
@@ -109,11 +117,10 @@ public class TestExpression extends TestCase {
 		return str + "test" + str2;
 	}
 
-	public String call(Object str) {
-		System.out.println(str);
-		return str + "test";
+	public String call(int a) {
+		return "test" + a;
 	}
-
+	
 	public String call() {
 		return "test";
 	}

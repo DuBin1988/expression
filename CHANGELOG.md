@@ -2,6 +2,12 @@
 所有关于本产品的变化都在该文档里。
 
 ## [Unreleased]
+
+## 1.1.17 - 2016-07-19 @何宁社
+### Fixed
+- 修改了整形常数变成了BigDecimal的错误
+- 修改了函数调用int与Integer的兼容性问题
+
 ## 1.1.16 - 2016-07-12 @何宁社
 ### Fixed
 - json包换org.json:json了

@@ -156,8 +156,7 @@ public class Expression {
 			}
 			case Constant: { // 常数
 				// 数字
-				if (this.value instanceof Double
-						|| this.value instanceof Integer) {
+				if (this.value instanceof Double) {
 					return new BigDecimal(this.value.toString());
 				}
 				// 其它常数，直接返回值
@@ -224,8 +223,8 @@ public class Expression {
 				return new BigDecimal(l.intValue() % r.intValue());
 			}
 		} else {
-			int l = new Integer(left.invoke().toString());
-			int r = new Integer(right.invoke().toString());
+			int l = Integer.parseInt(left.invoke().toString());
+			int r = Integer.parseInt(right.invoke().toString());
 			switch (type) {
 			case Add:
 				return l + r;

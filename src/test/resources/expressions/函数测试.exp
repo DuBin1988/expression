@@ -1,6 +1,6 @@
 source:
 
-this.call($abc$, $def$)
+this.call(2 + 6)
 
 expected:
-abctestdef
+test8
